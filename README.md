@@ -4,7 +4,7 @@ An interactive, scroll-driven 3D landing page for **Veyra One**, a concept pair 
 
 > Veyra is a fictional brand created for this project. The product, specs and prices are illustrative.
 
-**Live demo:** _add your Vercel link here_
+**Live demo:** [veyra-3d-alpha.vercel.app](https://veyra-3d-alpha.vercel.app)
 
 ![Hero section](docs/hero.jpg)
 
