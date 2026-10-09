@@ -2,36 +2,16 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { ContactShadows, Environment, Lightformer, Sparkles, PerformanceMonitor } from '@react-three/drei'
 import * as THREE from 'three'
-import Headphones from './Headphones'
 import { INTRO, drag } from '../interaction'
 
 const TAU = Math.PI * 2
 
-// One pose per page section (same order as the [data-stage] sections in App).
-// pos: x, y, z · rot: x, y, z · s: scale · e: explode amount (0 = assembled, 1 = apart)
-const DESKTOP = [
-  { pos: [0, 0.08, 0], rot: [0.14, -0.42, 0.04], s: 0.82, e: 0 },          // hero
-  { pos: [1.3, 0, 0], rot: [0.1, 0.9, -0.08], s: 0.86, e: 0 },             // sound
-  { pos: [1.4, -0.05, 0], rot: [0.28, -0.85, 0.05], s: 0.8, e: 0 },        // listen
-  { pos: [0.45, -0.05, 0], rot: [0.16, -0.22, 0], s: 0.76, e: 1 },         // inside
-  { pos: [-1.2, 0, 0], rot: [0.1, TAU - 0.4, 0], s: 0.92, e: 0 },          // finishes
-  { pos: [1.35, 0, -0.4], rot: [0.3, TAU + 0.6, 0.08], s: 0.76, e: 0 },    // specs
-  { pos: [1.5, -0.1, -0.6], rot: [0.2, TAU + 1.5, 0.1], s: 0.7, e: 0 },    // faq
-  { pos: [0, 0.72, 0], rot: [0.12, TAU, 0], s: 0.42, e: 0 },               // reserve
-]
-
-const MOBILE = DESKTOP.map((p, i) => ({
+// Phones: the product sits above the text, smaller and centred
+const mobilePoses = (product) => product.poses.map((p, i) => ({
   ...p,
   pos: [0, i === 0 ? 0.42 : 0.72, 0],
-  s: p.e ? 0.36 : i === 0 ? 0.52 : 0.48,
+  s: (p.e > 0.9 ? 0.36 : i === 0 ? 0.52 : 0.48) * product.mobileScale,
 }))
-
-// Labels shown when the headphones come apart (pinned to anchors in Headphones.jsx)
-const CALLOUTS = [
-  { id: 'foam', text: 'Slow-rebound memory foam', dir: 'up' },
-  { id: 'yoke', text: 'Machined aluminium yoke', dir: 'up' },
-  { id: 'driver', text: '40 mm beryllium-coated driver', dir: 'down' },
-]
 
 const lerp = THREE.MathUtils.lerp
 const smooth = (t) => t * t * (3 - 2 * t)
@@ -51,7 +31,7 @@ function stageProgress() {
   return centers.length - 1
 }
 
-// Rings of light that pulse outward from the headphones, like sound leaving the cups.
+// Rings of light that pulse outward from the product, like sound spreading out.
 // They only show in the hero and fade out as you scroll on.
 function SoundRings({ follow, hero, color, reduced }) {
   const group = useRef()
@@ -89,7 +69,7 @@ function SoundRings({ follow, hero, color, reduced }) {
   )
 }
 
-function Rig({ color, accent, reduced, labels }) {
+function Rig({ product, color, accent, reduced, labels }) {
   const group = useRef()
   const explode = useRef(0)
   const mouse = useRef({ x: 0, y: 0 })
@@ -97,6 +77,22 @@ function Rig({ color, accent, reduced, labels }) {
   const anchors = useRef({})
   const glow = useRef(null)
   const hero = useRef(1) // 1 while the hero is in view, 0 once scrolled past
+  const introStart = useRef(INTRO - 0.3) // when the spin-in starts (seconds on the scene clock)
+  const firstProduct = useRef(true)
+  const clock = useThree((st) => st.clock)
+  const poses = useMemo(() => ({ desktop: product.poses, mobile: mobilePoses(product) }), [product])
+
+  // Switching product: the new one rises and spins in again, right after the page transition
+  useEffect(() => {
+    if (firstProduct.current) { firstProduct.current = false; return }
+    introStart.current = clock.elapsedTime + 0.2
+    explode.current = 0
+    anchors.current = {}
+    if (group.current) {
+      group.current.position.y = -2.2
+      group.current.scale.setScalar(0.5)
+    }
+  }, [product, clock])
 
   useEffect(() => {
     const el = document.querySelector('.glow')
@@ -115,12 +111,12 @@ function Rig({ color, accent, reduced, labels }) {
   }, [])
 
   useFrame((state, dt) => {
-    const poses = mobile ? MOBILE : DESKTOP
+    const list = mobile ? poses.mobile : poses.desktop
     const p = stageProgress()
-    const i = Math.min(Math.floor(p), poses.length - 2)
+    const i = Math.min(Math.floor(p), list.length - 2)
     const t = p - i
-    const a = poses[i]
-    const b = poses[i + 1]
+    const a = list[i]
+    const b = list[i + 1]
     const k = 1 - Math.exp(-dt * (reduced ? 20 : 4.5))
     const g = group.current
     const time = state.clock.elapsedTime
@@ -128,7 +124,7 @@ function Rig({ color, accent, reduced, labels }) {
     hero.current = 1 - THREE.MathUtils.clamp(p * 1.4, 0, 1)
 
     // Load-in: one full turn while rising, easing out over ~2.6 s
-    const intro = reduced ? 0 : 1 - Math.pow(THREE.MathUtils.clamp((time - INTRO + 0.3) / 2.6, 0, 1), 3)
+    const intro = reduced ? 0 : 1 - Math.pow(THREE.MathUtils.clamp((time - introStart.current) / 2.6, 0, 1), 3)
 
     g.position.x = lerp(g.position.x, lerp(a.pos[0], b.pos[0], t), k)
     g.position.y = lerp(g.position.y, lerp(a.pos[1], b.pos[1], t) + Math.sin(time * 1.1) * 0.035 * idle, k)
@@ -158,7 +154,7 @@ function Rig({ color, accent, reduced, labels }) {
 
     // Pin each label to its point on the model, fading in as the parts separate
     const show = mobile ? 0 : THREE.MathUtils.clamp((explode.current - 0.6) / 0.35, 0, 1)
-    for (const { id } of CALLOUTS) {
+    for (const { id } of product.callouts) {
       const el = labels.current[id]
       const obj = anchors.current[id]
       if (!el || !obj) continue
@@ -175,14 +171,14 @@ function Rig({ color, accent, reduced, labels }) {
     <>
       {/* Starts low and small so it rises into place on load */}
       <group ref={group} position={[0, -2.2, 0]} scale={0.5} rotation={[0.6, -TAU - 0.4, 0]}>
-        <Headphones color={color} explodeRef={explode} anchors={anchors} />
+        <product.Model key={product.id} color={color} accent={accent} explodeRef={explode} anchors={anchors} />
       </group>
       <SoundRings follow={group} hero={hero} color={accent} reduced={reduced} />
     </>
   )
 }
 
-export default function Scene({ color, accent, reduced }) {
+export default function Scene({ product, color, accent, reduced }) {
   const labels = useRef({})
   // Drops render resolution if the device can't keep a smooth frame rate (e.g. integrated graphics)
   const [dpr, setDpr] = useState(1.5)
@@ -205,7 +201,7 @@ export default function Scene({ color, accent, reduced }) {
       />
       <directionalLight position={[-4, 1, 2]} intensity={0.6} color="#ffd9b8" />
       <directionalLight position={[0, 3, -5]} intensity={2.2} color="#bcd4ff" />
-      <Rig color={color} accent={accent} reduced={reduced} labels={labels} />
+      <Rig product={product} color={color} accent={accent} reduced={reduced} labels={labels} />
       {/* Dust catching the light */}
       <Sparkles count={60} scale={[8, 5, 3]} position={[0, 0, -1]} size={2.4} speed={reduced ? 0 : 0.25} opacity={0.55} noise={0.8} color={accent} />
       <ContactShadows position={[0, -1.5, 0]} opacity={0.5} scale={9} blur={2.8} far={3.5} resolution={256} />
@@ -222,8 +218,8 @@ export default function Scene({ color, accent, reduced }) {
       </Environment>
     </Canvas>
     <div className="callouts" aria-hidden="true">
-      {CALLOUTS.map((c) => (
-        <div key={c.id} ref={(el) => { labels.current[c.id] = el }} className="callout-anchor" style={{ opacity: 0 }}>
+      {product.callouts.map((c) => (
+        <div key={`${product.id}-${c.id}`} ref={(el) => { labels.current[c.id] = el }} className="callout-anchor" style={{ opacity: 0 }}>
           <div className={`callout callout--${c.dir}`}>
             <span className="callout-label">{c.text}</span>
             <span className="callout-line" />

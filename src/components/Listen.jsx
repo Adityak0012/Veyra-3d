@@ -58,50 +58,50 @@ function Waveform({ playing, anc }) {
   return <canvas ref={canvas} className="waveform" aria-hidden />
 }
 
-// Number that follows the simulated street level
-function DbMeter({ playing }) {
-  const [db, setDb] = useState(72)
+// Live reading for the demo: street level (noise cancelling) or low-end lift (bass boost)
+function Meter({ playing }) {
+  const [reading, setReading] = useState(audio.meter())
   useEffect(() => {
     let raf
-    const tick = () => { setDb(audio.streetDb()); raf = requestAnimationFrame(tick) }
+    const tick = () => { setReading(audio.meter()); raf = requestAnimationFrame(tick) }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
   }, [playing])
-  const pct = Math.max(0, Math.min(1, (db - 25) / 50))
   return (
     <div className="meter">
       <div className="meter-head">
-        <span>Street noise reaching you</span>
-        <span className="meter-value">{Math.round(db)} dB</span>
+        <span>{reading.label}</span>
+        <span className="meter-value">{reading.value}</span>
       </div>
-      <div className="meter-track"><span style={{ transform: `scaleX(${pct})` }} /></div>
+      <div className="meter-track"><span style={{ transform: `scaleX(${reading.pct})` }} /></div>
     </div>
   )
 }
 
-export default function Listen() {
+export default function Listen({ listen }) {
   const [playing, setPlaying] = useState(false)
   const [anc, setAnc] = useState(false)
 
-  useEffect(() => () => audio.pause(), [])
+  // Each product page has its own demo mode; stop the sound when leaving the page
+  useEffect(() => {
+    audio.setMode(listen.mode)
+    return () => audio.pause()
+  }, [listen.mode])
 
   const toggle = async () => {
-    if (playing) { audio.pause(); setPlaying(false) } else { await audio.play(anc); setPlaying(true) }
+    if (playing) { audio.pause(); setPlaying(false) } else { await audio.play(anc, listen.mode); setPlaying(true) }
   }
   const flip = () => {
     const next = !anc
     setAnc(next)
-    audio.setAnc(next)
+    audio.set(next)
   }
 
   return (
     <section id="listen" className="section" data-stage>
       <div className="copy copy--wide listen">
-        <h2>Hear the difference.</h2>
-        <p className="body">
-          Press play for a busy street with music on top, then switch noise cancelling on.
-          The sound is simulated in your browser, and works best with headphones.
-        </p>
+        <h2>{listen.title}</h2>
+        <p className="body">{listen.body}</p>
 
         <div className={`player ${anc ? 'player--anc' : ''}`}>
           <div className="player-row">
@@ -129,13 +129,13 @@ export default function Listen() {
                 <motion.span className="switch-thumb" layout transition={{ type: 'spring', stiffness: 500, damping: 34 }} />
               </span>
               <span className="switch-label">
-                Noise cancelling <strong>{anc ? 'On' : 'Off'}</strong>
+                {listen.toggle} <strong>{anc ? 'On' : 'Off'}</strong>
               </span>
             </button>
           </div>
 
           <Waveform playing={playing} anc={anc} />
-          <DbMeter playing={playing} />
+          <Meter playing={playing} />
           {!playing && (
             <p className="player-hint"><HeadphonesIcon size={14} aria-hidden /> Turn your volume down a little first.</p>
           )}

@@ -1,31 +1,56 @@
-# Veyra One: 3D Product Landing Page
+# Veyra: 3D Product Pages
 
-An interactive, scroll-driven 3D landing page for **Veyra One**, a concept pair of wireless noise-cancelling headphones. The headphones are modelled entirely in code with Three.js. They turn, come apart and change finish as you scroll. The page also has a listening demo that lets you *hear* noise cancelling, made with the Web Audio API.
+Interactive, scroll-driven 3D product pages for **Veyra**, a concept audio brand with five products:
+
+- **Veyra One** (`/`): wireless over-ear headphones
+- **Veyra Buds** (`/buds`): wireless earbuds in a charging case
+- **Veyra Arc** (`/arc`): a portable 360° speaker
+- **Veyra Halo** (`/halo`): a smart home speaker with a glowing light ring
+- **Veyra Spin** (`/spin`): a belt-driven turntable
+
+Every product is modelled entirely in code with Three.js. Each one turns, opens up and changes finish as you scroll, and has a listening demo built with the Web Audio API.
 
 > Veyra is a fictional brand created for this project. The product, specs and prices are illustrative.
 
 **Live demo:** [veyra-3d-alpha.vercel.app](https://veyra-3d-alpha.vercel.app)
 
-![Hero section](docs/hero.jpg)
+![Veyra One](docs/hero.jpg)
+
+| Veyra Buds | Veyra Arc |
+|---|---|
+| ![Veyra Buds](docs/buds.jpg) | ![Veyra Arc](docs/arc.jpg) |
+
+| Veyra Halo | Veyra Spin |
+|---|---|
+| ![Veyra Halo](docs/halo.jpg) | ![Veyra Spin](docs/spin.jpg) |
 
 ---
 
 ## Highlights
 
-- **Procedural 3D model.** The headphones are built from code (lathe, extrude and torus geometry), with no model files to download. Oval ear cups, a stitched leather headband, a brushed-steel yoke, a power button, a status light and a USB-C port.
+- **Five product pages, one engine.** Each product is a single config entry (copy, specs, 3D poses, labels). A product switcher with a curtain transition moves between them.
+- **Procedural 3D models.** The headphones, earbuds, speakers and turntable are built from code (lathe, extrude and torus geometry), with no model files to download.
 - **Scroll-driven camera choreography.** Each section has its own pose, and the model blends smoothly between them as you scroll.
-- **Exploded view.** The ear cups come apart to show the driver and foam, with labels that track each part in 3D.
-- **"Hear the difference" demo.** A busy street and music are generated live in the browser. Switching noise cancelling on filters the street out, with a real-time waveform and a dB meter.
-- **Finish picker that relights the page.** Sand, Graphite, Sage and Ember each recolour the model, the background, the moving colour light and the particles.
+- **Exploded views.** The headphones come apart, the earbud case opens and the buds rise out, the speaker's knit parts to show its drivers, Halo's fabric splits around its tweeters and woofer, and the turntable's record and platter lift off the belt drive. Labels track each part in 3D.
+- **Listening demos.** A busy street and music are generated live in the browser. On One and Buds, switching noise cancelling on filters the street out. On Arc, bass boost lifts the low end. On Halo, room fill adds a real convolution reverb. On Spin, vinyl warmth adds analogue softness and surface crackle. Each has a real-time waveform and meter.
+- **Finish picker that relights the page.** Sand, Graphite, Sage and Ember each recolour the product, the background, the moving colour light and the particles. Your choice carries across products.
 - **Drag to turn.** Spin the headphones with your mouse or finger. They keep some momentum, then glide back.
 - **Cinematic hero.** A loading intro, a spin-in entrance, a word-by-word headline, floating glass info cards with live meters, and sound-wave rings.
 - **Realistic rendering.** Soft shadows, studio light panels, physically based materials (clearcoat, sheen, anisotropy) and procedural bump textures.
 - **Fast on weaker laptops.** Resolution adjusts automatically to keep the frame rate smooth on integrated graphics.
 - **Accessible.** Keyboard focus styles, ARIA roles for switches and swatches, and a calmer version for people who turn on "reduce motion".
 
-| Exploded view | Listening demo |
+| Headphones apart | Earbud case open |
 |---|---|
-| ![Exploded view](docs/inside.jpg) | ![Listening demo](docs/listen.jpg) |
+| ![Exploded headphones](docs/inside.jpg) | ![Earbud case open](docs/buds-inside.jpg) |
+
+| Speaker apart | Halo apart |
+|---|---|
+| ![Speaker drivers](docs/arc-inside.jpg) | ![Halo tweeters and woofer](docs/halo-inside.jpg) |
+
+| Turntable apart | Listening demo |
+|---|---|
+| ![Turntable with the platter lifted](docs/spin-inside.jpg) | ![Listening demo](docs/listen.jpg) |
 
 | Finishes | Mobile |
 |---|---|
@@ -37,7 +62,7 @@ An interactive, scroll-driven 3D landing page for **Veyra One**, a concept pair 
 
 | Area | Tools |
 |---|---|
-| Framework | React 19, Vite |
+| Framework | React 19, Vite, React Router |
 | 3D | Three.js, React Three Fiber, drei |
 | Animation | Motion (Framer Motion), Lenis smooth scrolling |
 | Audio | Web Audio API (no audio files) |
@@ -73,29 +98,37 @@ Open http://localhost:5173.
 
 ```
 veyra-3d/
-├── public/
-│   ├── favicon.svg
-│   └── og.jpg                 # image shown when the link is shared
+├── public/                    # favicon and share image (og.jpg)
 ├── docs/                      # screenshots for this README
 ├── src/
 │   ├── components/
-│   │   ├── Headphones.jsx     # the 3D model, materials and textures
+│   │   ├── models/
+│   │   │   ├── Headphones.jsx # Veyra One
+│   │   │   ├── Buds.jsx       # Veyra Buds: case, lid hinge, earbuds
+│   │   │   ├── Arc.jsx        # Veyra Arc: knit body, drivers, light ring
+│   │   │   ├── Halo.jsx       # Veyra Halo: fabric dome, glass top, tweeters, woofer
+│   │   │   ├── Spin.jsx       # Veyra Spin: plinth, spinning record, tonearm, belt drive
+│   │   │   └── shared.js      # procedural texture helpers
+│   │   ├── ProductPage.jsx    # all page sections, driven by a product config
 │   │   ├── Scene.jsx          # canvas, lighting, scroll poses, sound rings, labels
-│   │   └── Listen.jsx         # "Hear the difference" player UI
-│   ├── App.jsx                # page sections, hero, finishes, FAQ, reserve form
-│   ├── audio.js               # Web Audio engine: street noise, music, noise cancelling
-│   ├── interaction.js         # shared state (drag-to-turn, intro timing)
-│   ├── data.js                # copy, finishes, specs and FAQ
+│   │   └── Listen.jsx         # listening demo UI
+│   ├── App.jsx                # routing, product switcher, curtain transition, loader, footer
+│   ├── products.js            # the five products: copy, specs, FAQ, 3D poses, and the finishes
+│   ├── audio.js               # Web Audio engine: noise cancelling, bass boost, room fill, vinyl warmth
+│   ├── interaction.js         # shared state (drag-to-turn, intro timing, smooth scroll)
 │   ├── index.css              # design tokens and all styles
 │   └── main.jsx
+├── vercel.json                # sends /buds and /arc to the app on Vercel
 └── index.html
 ```
+
+**Adding another product:** build a model in `src/components/models/` (it receives `color`, `explodeRef` and `anchors`), then add an entry to `PRODUCTS` in `products.js`. The page, menu tab and footer link appear automatically.
 
 ---
 
 ## How it works
 
-**Scroll poses.** Every `<section data-stage>` has a matching entry in the `DESKTOP` and `MOBILE` arrays in `Scene.jsx` (position, rotation, scale and how far apart the parts are). Each frame, the scene finds the two sections nearest the middle of the screen and blends between their poses. To change how the model moves, edit those arrays.
+**Scroll poses.** Every `<section data-stage>` has a matching entry in that product's `poses` array in `products.js` (position, rotation, scale and how far apart the parts are). Each frame, the scene finds the two sections nearest the middle of the screen and blends between their poses. Phone poses are derived from these automatically.
 
 **Labels on the 3D model.** Empty anchor points are placed on the model. Each frame their positions are projected to the screen, and the HTML labels are moved to match.
 

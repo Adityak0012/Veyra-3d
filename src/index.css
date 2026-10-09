@@ -93,8 +93,8 @@ a { color: inherit; text-decoration: none; }
 @keyframes sheen { 0% { background-position: 100% 0; } 60%, 100% { background-position: 0% 0; } }
 .wordmark-mask { display: inline-block; overflow: hidden; padding: 0.04em 0; }
 .wordmark-mask > span { display: inline-block; padding: 0 0.01em; }
-.scene { position: fixed !important; inset: 0; z-index: 0; pointer-events: none; }
-main, .site-footer { position: relative; z-index: 1; }
+.scene { position: fixed !important; inset: 0; z-index: 1; pointer-events: none; }
+main, .site-footer { position: relative; z-index: 2; }
 .grain {
   position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0.07;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -113,10 +113,31 @@ main, .site-footer { position: relative; z-index: 1; }
 }
 .nav--solid { background: color-mix(in oklab, var(--bg) 72%, transparent); backdrop-filter: blur(16px) saturate(1.2); }
 .logo { font-size: 22px; font-weight: 700; font-stretch: 125%; letter-spacing: -0.04em; }
-.nav nav { display: flex; gap: 36px; }
-.nav nav a { font-size: 14px; color: var(--muted); padding: 10px 0; transition: color 0.2s; }
-.nav nav a:hover { color: var(--text); }
 .nav .btn { justify-self: end; }
+
+/* Product switcher */
+.tabs {
+  display: flex; gap: 2px; padding: 4px; border-radius: 999px;
+  background: color-mix(in oklab, var(--bg) 50%, transparent);
+  border: 1px solid var(--hairline); backdrop-filter: blur(12px);
+}
+.tab {
+  position: relative; display: grid; place-items: center; min-height: 36px; padding: 0 18px; border-radius: 999px;
+  font-size: 14px; font-weight: 500; font-stretch: 112%; color: var(--muted); transition: color 0.25s;
+}
+.tab:hover { color: var(--text); }
+.tab--active { color: var(--champagne-ink); }
+.tab-pill { position: absolute; inset: 0; border-radius: 999px; background: var(--champagne); }
+.tab-label { position: relative; }
+
+/* Curtain between product pages */
+.curtain {
+  position: fixed; inset: 0; z-index: 90; display: grid; place-items: center;
+  background:
+    radial-gradient(60% 60% at 50% 50%, color-mix(in oklab, var(--a1) 25%, transparent), transparent 70%),
+    var(--bg);
+}
+.curtain-name { font-size: clamp(44px, 8vw, 120px); font-weight: 700; font-stretch: 125%; letter-spacing: -0.045em; }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -237,7 +258,7 @@ main, .site-footer { position: relative; z-index: 1; }
 
 /* Inside: labels live in the 3D scene on desktop */
 .parts { display: none; list-style: none; padding: 0; margin: 0; }
-.callouts { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.callouts { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
 .callout-anchor { position: absolute; top: 0; left: 0; will-change: transform, opacity; }
 .callout {
   display: flex; flex-direction: column; align-items: center;
@@ -439,8 +460,8 @@ main, .site-footer { position: relative; z-index: 1; }
 }
 
 @media (max-width: 819px) {
-  .nav { grid-template-columns: 1fr auto; }
-  .nav nav { display: none; }
+  .nav { gap: 10px; }
+  .tab { padding: 0 12px; min-height: 32px; font-size: 13px; }
   .wordmark { align-items: flex-start; padding: 15svh 0 0; font-size: 27vw; }
   .section, .section--right, .section--top {
     align-items: flex-end; justify-content: flex-start; padding-top: 50svh; padding-bottom: 64px;
@@ -472,6 +493,15 @@ main, .site-footer { position: relative; z-index: 1; }
   .specs { grid-template-columns: 1fr; }
   .section--end { padding-top: 46svh; }
   .field { flex-direction: column; }
+}
+
+@media (max-width: 479px) {
+  .nav { grid-template-columns: auto minmax(0, 1fr); gap: 8px; }
+  .nav .tabs { justify-self: end; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .nav .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 0 9px; min-height: 30px; font-size: 12px; flex: none; }
+  .logo { font-size: 19px; }
+  .nav-cta { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
